@@ -3,6 +3,7 @@ import { Alert, StyleSheet, Text, View, Image, ScrollView, ToastAndroid } from '
 import * as ImagePicker from 'expo-image-picker';
 import { getAuth } from "firebase/auth";
 import { getDatabase, push, ref, onValue, remove } from "firebase/database";
+import { Camera } from 'expo-camera';
 
 import { Input, Button, Card, SearchBar } from 'react-native-elements';
 
@@ -21,26 +22,27 @@ export default function Receipts({ navigation }) {
     const userId = auth.currentUser.uid;
 
     const [name, setName] = useState('')
-    const [hasPermission, setPermission] = useState(null);
+    const [hasStoragePermission, setStoragePermission] = useState(null);
     const [image, setImage] = useState(null);
     const [receipts, setReceipts] = useState([]);
     const date = new Date()
     const [search, setSearch] = useState('')
     const [filteredDataSource, setFilteredDataSource] = useState([]);
 
-    //ask camerapermission and get receipts from database
+    //ask storagepermission and get receipts from database
     useEffect(() => {
-        askCameraPermission();
+        askStoragePermission();
         getData();
     }, []);
 
-    const askCameraPermission = async () => {
+    const askStoragePermission = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
             Alert.alert('We need permission to use storage!')
         }
-        setPermission(status == 'granted');
+        setStoragePermission(status == 'granted');
     }
+
 
     //gets the saved receipts from user specific database collection
     const getData = () => {
@@ -154,7 +156,7 @@ export default function Receipts({ navigation }) {
                                             source={{ uri: item.image }}
                                         />
                                     </TouchableOpacity>
-                                    <Text style={styles.text}>{item.name}, {item.date} </Text>
+                                    <Text style={styles.text}>{item.name} {"\n"}{item.date} </Text>
                                     <TouchableOpacity onPress={() => deleteItem({ item })}>
                                         <Text style={{ color: 'red' }}>Delete</Text>
                                     </TouchableOpacity>
@@ -178,7 +180,9 @@ const styles = StyleSheet.create({
     },
     item: {
         flexDirection: 'row',
-        padding: 10
+        padding: 10,
+        position: "relative",
+        alignItems: "center"
     },
     text: {
         fontSize: 20,
