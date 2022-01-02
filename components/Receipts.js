@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Alert, StyleSheet, Text, View, Image, ScrollView, ToastAndroid } from 'react-native'
 import * as ImagePicker from 'expo-image-picker';
 import { getAuth } from "firebase/auth";
 import { getDatabase, push, ref, onValue, remove } from "firebase/database";
-import { Camera } from 'expo-camera';
 
 import { Input, Button, Card, SearchBar } from 'react-native-elements';
 
@@ -13,8 +12,6 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 //get userinformation and database
 const auth = getAuth();
 const database = getDatabase(Firebase);
-
-
 
 export default function Receipts({ navigation }) {
 
@@ -43,7 +40,6 @@ export default function Receipts({ navigation }) {
         setStoragePermission(status == 'granted');
     }
 
-
     //gets the saved receipts from user specific database collection
     const getData = () => {
         const itemsRef = ref(database, `${userId}/receipts`)
@@ -56,7 +52,7 @@ export default function Receipts({ navigation }) {
                 setFilteredDataSource(receipts)
             })
         return unsubscribe
-    }
+    };
 
     //handeling imagepicker
     const pickImage = async () => {
@@ -65,32 +61,27 @@ export default function Receipts({ navigation }) {
             allowsEditing: true,
             aspect: [4, 3],
             quality: 1,
+            base64: true,
         });
 
-        console.log(result);
-
         if (!result.cancelled) {
-            setImage(result.uri);
-            /*uploadImage()
-            .then(() => {
-                Alert.alert('success')
-            }).catch((error) => {
-                console.log(error.message)
-            })*/
+            setImage(result.base64);
         }
     };
 
     //handeling uploading image to user specific database collection, adds a date automatically with the image
-    //saves the images location to database
+    //saves the image as base64-string
     const uploadImage = async () => {
         const nowdate = date.getDate() + '.' + (date.getMonth() + 1) + '.' + date.getFullYear()
 
         const unsubscribe = push(ref(database, `${userId}/receipts`), {
             'image': image, 'name': name, 'date': nowdate
         })
+        ToastAndroid.show('saved successfully!', ToastAndroid.SHORT)
         setName('')
+        setImage(null)
         return unsubscribe
-    }
+    };
 
     //search bar handeling
     const searchFilterFunction = (text) => {
@@ -121,13 +112,19 @@ export default function Receipts({ navigation }) {
         let idRef = ref(database, `${userId}/receipts/${item.key}`);
         remove(idRef)
             .catch(function (error) { Alert.alert('remove failed') })
-
-    }
+    };
 
     return (
         <ScrollView>
             <View style={styles.container}>
-                <Button buttonStyle={styles.button} title="Pick an image from camera roll" onPress={pickImage} />
+                {!hasStoragePermission ? <Text>Please give permisson to storage</Text> : <Button buttonStyle={styles.button} title="Pick an image from camera roll" onPress={pickImage} />}
+                <View style={styles.imagePreview}>
+                    <Image
+                        style={{ width: 100, height: 100, }}
+                        resizeMode="cover"
+                        source={{ uri: `data:image/gif;base64,${image}` }}
+                    />
+                </View>
                 <Input placeholder='Name' onChangeText={(name) => setName(name)} value={name} />
                 <Button buttonStyle={styles.button} title="Upload" onPress={uploadImage} />
             </View>
@@ -153,7 +150,7 @@ export default function Receipts({ navigation }) {
                                         <Image
                                             style={{ width: 100, height: 100, }}
                                             resizeMode="cover"
-                                            source={{ uri: item.image }}
+                                            source={{ uri: `data:image/gif;base64,${item.image}` }}
                                         />
                                     </TouchableOpacity>
                                     <Text style={styles.text}>{item.name} {"\n"}{item.date} </Text>
@@ -169,14 +166,16 @@ export default function Receipts({ navigation }) {
             </View>
         </ScrollView>
     )
-}
+};
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        //alignItems: 'center',
         justifyContent: 'center',
+    },
+    imagePreview: {
+        alignItems: 'center',
     },
     item: {
         flexDirection: 'row',

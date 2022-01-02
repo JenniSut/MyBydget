@@ -15,7 +15,7 @@ export default function Receipt({ route, navigation }) {
                     resizeMode: 'contain',
                 }}
                 resizeMode="cover"
-                source={{ uri: item.image }}
+                source={{ uri: `data:image/gif;base64,${item.image}` }}
             />
         </View>
     )

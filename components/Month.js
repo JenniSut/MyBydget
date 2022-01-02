@@ -33,7 +33,7 @@ export default function Month({ route, navigation }) {
     //Gets this ongoing months costs and incomes and the saved equals from every month
     useEffect(() => {
 
-        const itemsRef = ref(database, `${userId}/month/${date.getMonth() + 1}${date.getFullYear()}`)
+        const itemsRef = ref(database, `${userId}/month/${FormatMe(date.getMonth() + 1)}${date.getFullYear()}`)
         //unsubscribes from the listener if this screen is not active
         const unsubscribe = onValue(itemsRef, (snapshot) => {
             const dbData = snapshot.val();
@@ -88,10 +88,16 @@ export default function Month({ route, navigation }) {
         showMode('date');
     };
 
+    //formatting the month for the database
+    const FormatMe = (n) => {
+        var x= (n < 10) ? '0' + n : n;
+        return (x)
+    }
+
     //saves income to the ongoing-months user specific database collection
     const saveIncome = () => {
 
-        push(ref(database, `${userId}/month/${date.getMonth() + 1}${date.getFullYear()}`), {
+        push(ref(database, `${userId}/month/${FormatMe(date.getMonth() + 1)}${date.getFullYear()}`), {
             'amount': income, 'type': 'income', 'exp': explanation, 'date': showDate
         });
         setEquals(equals + parseFloat(income));
@@ -104,7 +110,7 @@ export default function Month({ route, navigation }) {
      //saves cost to the ongoing-months user specific database collection
     const saveCost = () => {
         setEquals(equals - parseFloat(cost))
-        push(ref(database, `${userId}/month/${date.getMonth() + 1}${date.getFullYear()}`), {
+        push(ref(database, `${userId}/month/${FormatMe(date.getMonth() + 1)}${date.getFullYear()}`), {
             'amount': '-' + cost, 'type': 'cost', 'exp': explanation, 'date': showDate
         });
         setIncome('');
@@ -116,7 +122,7 @@ export default function Month({ route, navigation }) {
     //deletes item from the ongoing-months user specific database collection
     const deleteItem = ({ item }) => {
         setEquals(equals - parseFloat(item.amount))
-        let idRef = ref(database, `${userId}/month/${date.getMonth() + 1}${date.getFullYear()}/${item.key}`);
+        let idRef = ref(database, `${userId}/month/${FormatMe(date.getMonth() + 1)}${date.getFullYear()}/${item.key}`);
         remove(idRef)
             .catch(function (error) { Alert.alert('remove failed') })
     }
